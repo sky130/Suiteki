@@ -22,11 +22,23 @@ public class Suiteki {
         return key;
     }
 
-    public static String getModel(String log){
-        String model = getTheTexto(log,"model='","', name=");
-        Log.d("Suiteki.test","Model:" + model);
-        return model;
+
+    public static String getModel(String key,String log){
+        String[] loge = AnalyzeText(log,"\n");
+        String[] model;
+        String cache = "";
+        for(int a = 0;loge.length > a;a++){
+            if(Lookfor(loge[a],key,0) != -1){
+                cache = getTheTexto(loge[a],"model='","', name=") + "\n" + cache;
+                Log.d("Suiteki.test",getTheTexto(loge[a],"model='","', name="));
+            }
+        }
+        model = AnalyzeText(cache,"\n");
+        model = deleteText(model);
+        Log.d("Suiteki.test","Model:" + model[0]);
+        return model[0];
     }
+
 
     public static String[] getAuthKeyList(String log){
         String[] loge;
@@ -41,22 +53,6 @@ public class Suiteki {
         key = AnalyzeText(cache,"\n");
         key = deleteText(key);
         return key;
-    }
-
-    public static String[] getModelList(String log) {
-        String[] loge;
-        String[] model = null;
-        loge = AnalyzeText(log,"\n");
-        String cache = "";
-        for(int a = 0;loge.length > a;a++){
-            if(Lookfor(loge[a],"model='",0) != -1){
-                cache = getModel(loge[a]) + "\n" + cache;
-            }
-        }
-        //Log.d("Suiteki.test","Model:true");
-        model = AnalyzeText(cache,"\n");
-        model = deleteText(model);
-        return model;
     }
 
     private static int Lookfor(String str1, String str2, int start) {
