@@ -1,10 +1,24 @@
 # Suiteki —— 一个可以获取小米手环的AuthKey的类库
 
+>[原理](#原理)
+>>
 >[引进方法](#引进方法)
 >>
 >[食用方法](#食用方法)
 >>
 >[编译方法](#编译方法)
+
+## 原理
+>通过读取**小米运动健康**和**小米穿戴**的Log日志文件
+>>
+>分析并得出**AuthKey**
+>>
+
+#### 日志文件的位置
+```
+"/storage/emulated/0/Android/data/com.mi.health/files/log/XiaomiFit.device.log"
+"/storage/emulated/0/Android/data/com.xiaomi.wearable/files/log/Wearable.log"
+```
 
 ## 引进方法
 >把**Suiteki.jar**放置到**Project**下的**libs**文件夹内
