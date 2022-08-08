@@ -7,6 +7,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Array;
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -22,6 +23,23 @@ public class Suiteki {
         return key;
     }
 
+//    public static String getModel(String AuthKey,String log){
+//        String[] loge;
+//        String[] model = null;
+//        String cache = "";
+//        loge = AnalyzeText(log,"\n");
+//        for(int a = 0;loge.length > a;a++){
+//            if(String.valueOf(Lookfor(loge[1],AuthKey,0)).equals("-1")){
+//                cache = getTheTexto(loge[a],"model='","', name=") + "\n" + cache;
+//                Log.d("Suiteki.test",getTheTexto(loge[a],"model='","', name="));
+//            }
+//        }
+//
+//        model = AnalyzeText(cache,"\n");
+//        model = deleteText(model);
+//        Log.d("Suiteki.test","Model:" + model[0]);
+//        return model[0];
+//    }
 
     public static String getModel(String key,String log){
         String[] loge = AnalyzeText(log,"\n");
@@ -54,6 +72,51 @@ public class Suiteki {
         key = deleteText(key);
         return key;
     }
+
+    public static String getModelName(String model){
+        String name;
+        switch(model){
+            case "hmpace.bracelet.v5" :
+                name = "小米手环5";
+                break;
+            case "hmpace.bracelet.v5h":
+                name = "小米手环5 NFC版";
+                break;
+            case "hmpace.motion.v6":
+                name = "小米手环6";
+                break;
+            case "hmpace.motion.v6nfc":
+                name = "小米手环6 NFC版";
+                break;
+            case "hqbd3.watch.l67":
+                name = "小米手环7 Pro";
+                break;
+            case "hmpace.watch.v7":
+                name = "小米手环7";
+                break;
+            case "hmpace.watch.v7nfc":
+                name = "小米手环7 NFC版";
+                break;
+            default :
+                name = "notFound";
+        }
+        return name;
+    }
+//    public static String[] getModelList(String log) {
+//        String[] loge;
+//        String[] model = null;
+//        loge = AnalyzeText(log,"\n");
+//        String cache = "";
+//        for(int a = 0;loge.length > a;a++){
+//            if(Lookfor(loge[a],"model='",0) != -1){
+//                cache = getModel(loge[a]) + "\n" + cache;
+//            }
+//        }
+//        //Log.d("Suiteki.test","Model:true");
+//        model = AnalyzeText(cache,"\n");
+//        model = deleteText(model);
+//        return model;
+//    }
 
     private static int Lookfor(String str1, String str2, int start) {
         return start >= 0 && start <= str1.length() && !"".equals(str1) && !"".equals(str2) ? str1.indexOf(str2, start) : -1;
@@ -107,7 +170,6 @@ public class Suiteki {
     }
 
     private static String exchangeText(String str, String find, String replace) {
-        //子文本替换
         if (!"".equals(find) && !"".equals(str)) {
             find = "\\Q" + find + "\\E";
             return str.replaceAll(find, replace);
