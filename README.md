@@ -16,8 +16,8 @@
 
 #### 日志文件的位置
 ```
-"/storage/emulated/0/Android/data/com.mi.health/files/log/XiaomiFit.device.log"
-"/storage/emulated/0/Android/data/com.xiaomi.wearable/files/log/Wearable.log"
+"/storage/emulated/0/Android/data/com.mi.health/files/log/XiaomiFit.device.log"//小米运动健康
+"/storage/emulated/0/Android/data/com.xiaomi.wearable/files/log/Wearable.log"//小米穿戴,小米穿戴的Log中没有Model,不能获取所属型号
 ```
 
 ## 引进方法
