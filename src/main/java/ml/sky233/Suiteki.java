@@ -1,21 +1,102 @@
 package ml.sky233;
 
-import android.text.InputFilter;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.Toast;
-import java.io.File;
-import java.io.FileInputStream;
-import java.lang.reflect.Array;
-import java.text.BreakIterator;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import okhttp3.FormBody;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class Suiteki {
+    public static String[] AuthKey;
 
+    public static String[] getKey(String code){
+        Thread thread = null;
+        thread = new Thread(new Runnable() {
+            String token = "";
+            String user = "";
+            String text = "";
+            //String[] authkeyList;
+            public void run() {
+                OkHttpClient client = new OkHttpClient();
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
+                        .add("app_version", "5.9.2-play_100355")
+                        .add("source", "com.huami.watch.hmwatchmanager")
+                        .add("country_code", "US")
+                        .add("device_id", "02:00:00:6f:ad:18")
+                        .add("third_name", "mi-watch")
+                        .add("lang", "en")
+                        .add("device_model", "android_phone")
+                        .add("allow_registration", "false")
+                        .add("app_name", "com.huami.midong")
+                        .add("code", code)
+                        .add("grant_type", "request_token")
+                        .build();
+                Request postRequest = new Request.Builder()
+                        .url("https://account.huami.com/v2/client/login")
+                        .post(requestBody)
+                        .build();
+                try {
+                    Response response = client.newCall(postRequest).execute();
+                    text = response.body().string();
+                    Log.d("Suiteki.test", text);
+                    token = getObjectText(getObject(toObject(text), "token_info"), "app_token");
+                    user = getObjectText(getObject(toObject(text), "token_info"), "user_id");
+                    Log.d("Suiteki.test", "user : " + user + "\n token : " + token);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if(!getObjectText(toObject(text),"error_code").equals("0106")) {
+                    client = new OkHttpClient();
+                    Headers header = new Headers.Builder()
+                            .add("apptoken", token)
+                            .build();
+                    postRequest = new Request.Builder()
+                            .url("https://api-mifit-us2.huami.com/users/" + user + "/devices?enableMultiDevice=true")
+                            .headers(header)
+                            .build();
+                    try {
+                        Response response = client.newCall(postRequest).execute();
+                        text = response.body().string();
+                        Log.d("Suiteki.test", text);
+                        Object object = getArray(toObject(text),"items");
+                        String[] authkeyList = new String[getArrayLength(object)];
+                        for(int a = 0;getArrayLength(object) > a;a++){
+                            authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object,a), "additionalInfo")),"auth_key") + "\n" + getObjectText(getArrayObject(object,a), "macAddress");
+                            //getObjectText(getArrayObject(object,a), "macAddress");
+                        }
+                        AuthKey = authkeyList;
+                        Log.d("Suiteki.test",text);
+                        Log.d("Suiteki.test", Arrays.toString(authkeyList));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    String[] authkeyList = new String[1];
+                    AuthKey[0] = "0106";
+                }
+            }
 
+        });
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return AuthKey;
+    }
 
     public static String getAuthKey(String log){
         String key = getTextRight(getTheTexto(log,"authKey",","),32);
@@ -23,28 +104,20 @@ public class Suiteki {
         return key;
     }
 
-//    public static String getModel(String AuthKey,String log){
-//        String[] loge;
-//        String[] model = null;
-//        String cache = "";
-//        loge = AnalyzeText(log,"\n");
-//        for(int a = 0;loge.length > a;a++){
-//            if(String.valueOf(Lookfor(loge[1],AuthKey,0)).equals("-1")){
-//                cache = getTheTexto(loge[a],"model='","', name=") + "\n" + cache;
-//                Log.d("Suiteki.test",getTheTexto(loge[a],"model='","', name="));
-//            }
-//        }
-//
-//        model = AnalyzeText(cache,"\n");
-//        model = deleteText(model);
-//        Log.d("Suiteki.test","Model:" + model[0]);
-//        return model[0];
-//    }
+    public static boolean isMoreAuthkey(String log){
+        String[] loge = getAuthKeyList(log);
+        if (loge.length > 1){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
     public static String getModel(String key,String log){
         String[] loge = AnalyzeText(log,"\n");
         String[] model;
         String cache = "";
+        Log.d("Suiteki.test","Log:" + log);
         for(int a = 0;loge.length > a;a++){
             if(Lookfor(loge[a],key,0) != -1){
                 cache = getTheTexto(loge[a],"model='","', name=") + "\n" + cache;
@@ -56,7 +129,6 @@ public class Suiteki {
         Log.d("Suiteki.test","Model:" + model[0]);
         return model[0];
     }
-
 
     public static String[] getAuthKeyList(String log){
         String[] loge;
@@ -102,26 +174,10 @@ public class Suiteki {
         }
         return name;
     }
-//    public static String[] getModelList(String log) {
-//        String[] loge;
-//        String[] model = null;
-//        loge = AnalyzeText(log,"\n");
-//        String cache = "";
-//        for(int a = 0;loge.length > a;a++){
-//            if(Lookfor(loge[a],"model='",0) != -1){
-//                cache = getModel(loge[a]) + "\n" + cache;
-//            }
-//        }
-//        //Log.d("Suiteki.test","Model:true");
-//        model = AnalyzeText(cache,"\n");
-//        model = deleteText(model);
-//        return model;
-//    }
 
     private static int Lookfor(String str1, String str2, int start) {
         return start >= 0 && start <= str1.length() && !"".equals(str1) && !"".equals(str2) ? str1.indexOf(str2, start) : -1;
     }
-
 
     private static String[] AnalyzeText(String str, String separator) {
         if (!"".equals(separator) && !"".equals(str)) {
@@ -150,7 +206,6 @@ public class Suiteki {
         return !"".equals(str) && !"".equals(left) && !"".equals(right) ? regexMatch(str, "(?<=\\Q" + left + "\\E).*?(?=\\Q" + right + "\\E)") : new String[0];
     }
 
-
     private static String getTheTexto(String str, String left, String right) {
         String[] temp = getTheText(str, left, right);
         return temp.length > 0 ? temp[0] : "";
@@ -177,6 +232,7 @@ public class Suiteki {
             return "";
         }
     }
+
     private static int getTextLength(String str) {
         return str.length();
     }
@@ -190,5 +246,75 @@ public class Suiteki {
         }
         String[] strings = new String[list.size()];
         return (String[])list.toArray(strings);
+    }
+
+    private static Object toObject(String var1) {
+        try {
+            JSONObject var2 = new JSONObject(var1);
+            return var2;
+        } catch (JSONException var3) {
+            return null;
+        }
+    }
+
+    private static Object getObject(Object var1, String var2) {
+        JSONObject var3 = (JSONObject)var1;
+        if (var3 == null) {
+            return null;
+        } else {
+            try {
+                JSONObject var4 = var3.getJSONObject(var2);
+                return var4;
+            } catch (JSONException var5) {
+                return null;
+            }
+        }
+    }
+
+    private static String getObjectText(Object var1, String var2) {
+        JSONObject var3 = (JSONObject)var1;
+        if (var3 == null) {
+            return "";
+        } else {
+            try {
+                String var4 = var3.getString(var2);
+                return var4;
+            } catch (JSONException var5) {
+                return "";
+            }
+        }
+    }
+
+    private static Object getArray(Object var1, String var2) {
+        JSONObject var3 = (JSONObject)var1;
+        if (var3 == null) {
+            return null;
+        } else {
+            try {
+                JSONArray var4 = var3.getJSONArray(var2);
+                return var4;
+            } catch (JSONException var5) {
+                return null;
+            }
+        }
+    }
+
+    private static int getArrayLength(Object var1) {
+        JSONArray var2 = (JSONArray)var1;
+        return var2 == null ? 0 : var2.length();
+    }
+
+    private static Object getArrayObject(Object var1, int var2) {
+        JSONArray var3 = (JSONArray)var1;
+        if (var3 == null) {
+            return null;
+        } else {
+            try {
+                JSONObject var4 = var3.getJSONObject(var2);
+                return var4;
+            } catch (JSONException var5) {
+                return null;
+            }
+        }
     }
 }
