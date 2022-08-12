@@ -77,7 +77,7 @@ task makeJar(type: Jar) {
 >运行该命令后你可以在**/Suiteki/build/libs/**中找到 **Suieki.jar**了
 
 
-## 获取coode
+## 获取code
 >链接:
 >>
 ```
