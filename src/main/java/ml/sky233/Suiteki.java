@@ -18,23 +18,26 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Suiteki {
-    public static String[] AuthKey;
+    private static String[] AuthKey;//AuthKey列表
 
-    public static String[] getKey(String code){
+    //用OkHttp发送请求通过华米接口获取AuthKey
+    //灵感来源于 https://github.com/argrento/huami-token
+    public static String[] getHuamiToken(String code){
         Thread thread = null;
+
+        //用线程发送请求
         thread = new Thread(new Runnable() {
             String token = "";
             String user = "";
             String text = "";
-            //String[] authkeyList;
             public void run() {
                 OkHttpClient client = new OkHttpClient();
-                RequestBody requestBody = new FormBody.Builder()
+                RequestBody requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
                         .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
                         .add("app_version", "5.9.2-play_100355")
                         .add("source", "com.huami.watch.hmwatchmanager")
                         .add("country_code", "US")
-                        .add("device_id", "02:00:00:6f:ad:18")
+                        .add("device_id", "02:00:00:6f:ad:18")//设备码可以修改一下
                         .add("third_name", "mi-watch")
                         .add("lang", "en")
                         .add("device_model", "android_phone")
@@ -44,41 +47,41 @@ public class Suiteki {
                         .add("grant_type", "request_token")
                         .build();
                 Request postRequest = new Request.Builder()
-                        .url("https://account.huami.com/v2/client/login")
-                        .post(requestBody)
+                        .url("https://account.huami.com/v2/client/login")//请求接口
+                        .post(requestBody)//post请求
                         .build();
                 try {
                     Response response = client.newCall(postRequest).execute();
-                    text = response.body().string();
-                    Log.d("Suiteki.test", text);
-                    token = getObjectText(getObject(toObject(text), "token_info"), "app_token");
-                    user = getObjectText(getObject(toObject(text), "token_info"), "user_id");
-                    Log.d("Suiteki.test", "user : " + user + "\n token : " + token);
+                    text = response.body().string();//因为response.body()只能调用一次,必须这样
+                    //Log.d("Suiteki.test", text);
+                    token = getObjectText(getObject(toObject(text), "token_info"), "app_token");//app令牌,接下来会用到这个token
+                    user = getObjectText(getObject(toObject(text), "token_info"), "user_id");//用户id,稍后会用到
+                    //Log.d("Suiteki.test", "user : " + user + "\n token : " + token);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                if(!getObjectText(toObject(text),"error_code").equals("0106")) {
+                if(!getObjectText(toObject(text),"error_code").equals("0106")) {//错误码0106,登录错误
                     client = new OkHttpClient();
                     Headers header = new Headers.Builder()
-                            .add("apptoken", token)
+                            .add("apptoken", token)//app令牌
                             .build();
                     postRequest = new Request.Builder()
-                            .url("https://api-mifit-us2.huami.com/users/" + user + "/devices?enableMultiDevice=true")
+                            .url("https://api-mifit-us2.huami.com/users/" + user + "/devices?enableMultiDevice=true")//这里中间要改为user_id
                             .headers(header)
                             .build();
                     try {
                         Response response = client.newCall(postRequest).execute();
                         text = response.body().string();
-                        Log.d("Suiteki.test", text);
-                        Object object = getArray(toObject(text),"items");
-                        String[] authkeyList = new String[getArrayLength(object)];
+                        //Log.d("Suiteki.test", text);
+                        Object object = getArray(toObject(text),"items");//解析Json
+                        String[] authkeyList = new String[getArrayLength(object)];//解析Json
                         for(int a = 0;getArrayLength(object) > a;a++){
                             authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object,a), "additionalInfo")),"auth_key") + "\n" + getObjectText(getArrayObject(object,a), "macAddress");
                             //getObjectText(getArrayObject(object,a), "macAddress");
                         }
                         AuthKey = authkeyList;
-                        Log.d("Suiteki.test",text);
-                        Log.d("Suiteki.test", Arrays.toString(authkeyList));
+                        //Log.d("Suiteki.test",text);
+                        //Log.d("Suiteki.test", Arrays.toString(authkeyList));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -91,19 +94,21 @@ public class Suiteki {
         });
         thread.start();
         try {
-            thread.join();
+            thread.join();//等待线程
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return AuthKey;
     }
 
+    //普通获取方式,仅限一个AuthKey
     public static String getAuthKey(String log){
         String key = getTextRight(getTheTexto(log,"authKey",","),32);
         Log.d("Suiteki.test","Authkey:" + key);
         return key;
     }
 
+    //检测是否AuthKey的数量是否大于1,但占用较大,不建议使用,以后会废弃这个方法
     public static boolean isMoreAuthkey(String log){
         String[] loge = getAuthKeyList(log);
         if (loge.length > 1){
@@ -113,6 +118,7 @@ public class Suiteki {
         }
     }
 
+    //取设备的型号,仅限一个设备
     public static String getModel(String key,String log){
         String[] loge = AnalyzeText(log,"\n");
         String[] model;
@@ -130,6 +136,7 @@ public class Suiteki {
         return model[0];
     }
 
+    //取多个手环AuthKey,可能会报错
     public static String[] getAuthKeyList(String log){
         String[] loge;
         String[] key = null;
@@ -145,6 +152,7 @@ public class Suiteki {
         return key;
     }
 
+    //取设备名称,用于搭配前面的.getModel(),这里包括了大部分常见设备
     public static String getModelName(String model){
         String name;
         switch(model){
@@ -317,4 +325,12 @@ public class Suiteki {
             }
         }
     }
+
+    /**
+     * re酱是我的
+     * re可爱捏
+     * 谁都不许夺走
+     * -Sky233
+     * 2022/8/23
+     */
 }
