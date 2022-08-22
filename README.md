@@ -50,7 +50,7 @@ dependencies {
     Suiteki.getAuthKeyList()//里面也是放入Log内容(类型为String)返回数据类型为String[]
     Suiteki.getModel()//先放入AuthKey类型为String)再放入Log内容(类型为String)返回数据类型为String
     Suiteki.isMoreAuthkey()//里面放入Log内容, 返回boolean类型
-    Suiteki.getKey()//需要提交code
+    Suiteki.getHuamiToken()//需要提交code
     Suiteki.getModelName()//放入型号，getModel返回的就是型号
 ```
 >第一个函数可以用在**小米运动健康**和**小米穿戴**上
