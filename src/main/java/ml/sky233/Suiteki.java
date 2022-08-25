@@ -1,15 +1,18 @@
 package ml.sky233;
 
 import android.util.Log;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import okhttp3.FormBody;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
@@ -22,7 +25,7 @@ public class Suiteki {
 
     //用OkHttp发送请求通过华米接口获取AuthKey
     //灵感来源于 https://github.com/argrento/huami-token
-    public static String[] getHuamiToken(String code){
+    public static String[] getHuamiToken(String code) {
         Thread thread = null;
 
         //用线程发送请求
@@ -30,6 +33,7 @@ public class Suiteki {
             String token = "";
             String user = "";
             String text = "";
+
             public void run() {
                 OkHttpClient client = new OkHttpClient();
                 RequestBody requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
@@ -60,7 +64,7 @@ public class Suiteki {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                if(!getObjectText(toObject(text),"error_code").equals("0106")) {//错误码0106,登录错误
+                if (!getObjectText(toObject(text), "error_code").equals("0106")) {//错误码0106,Code错误
                     client = new OkHttpClient();
                     Headers header = new Headers.Builder()
                             .add("apptoken", token)//app令牌
@@ -73,10 +77,10 @@ public class Suiteki {
                         Response response = client.newCall(postRequest).execute();
                         text = response.body().string();
                         //Log.d("Suiteki.test", text);
-                        Object object = getArray(toObject(text),"items");//解析Json
+                        Object object = getArray(toObject(text), "items");//解析Json
                         String[] authkeyList = new String[getArrayLength(object)];//解析Json
-                        for(int a = 0;getArrayLength(object) > a;a++){
-                            authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object,a), "additionalInfo")),"auth_key") + "\n" + getObjectText(getArrayObject(object,a), "macAddress");
+                        for (int a = 0; getArrayLength(object) > a; a++) {
+                            authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key") + "\n" + getObjectText(getArrayObject(object, a), "macAddress");
                             //getObjectText(getArrayObject(object,a), "macAddress");
                         }
                         AuthKey = authkeyList;
@@ -85,9 +89,9 @@ public class Suiteki {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }else{
+                } else {
                     String[] authkeyList = new String[1];
-                    AuthKey[0] = "0106";
+                    AuthKey[0] = "0106";//错误的密钥为0106,记得做判断
                 }
             }
 
@@ -102,61 +106,61 @@ public class Suiteki {
     }
 
     //普通获取方式,仅限一个AuthKey
-    public static String getAuthKey(String log){
-        String key = getTextRight(getTheTexto(log,"authKey",","),32);
-        Log.d("Suiteki.test","Authkey:" + key);
+    public static String getAuthKey(String log) {
+        String key = getTextRight(getTheTexto(log, "authKey", ","), 32);
+        Log.d("Suiteki.test", "Authkey:" + key);
         return key;
     }
 
     //检测是否AuthKey的数量是否大于1,但占用较大,不建议使用,以后会废弃这个方法
-    public static boolean isMoreAuthkey(String log){
+    public static boolean isMoreAuthkey(String log) {
         String[] loge = getAuthKeyList(log);
-        if (loge.length > 1){
+        if (loge.length > 1) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
 
     //取设备的型号,仅限一个设备
-    public static String getModel(String key,String log){
-        String[] loge = AnalyzeText(log,"\n");
+    public static String getModel(String key, String log) {
+        String[] loge = AnalyzeText(log, "\n");
         String[] model;
         String cache = "";
-        Log.d("Suiteki.test","Log:" + log);
-        for(int a = 0;loge.length > a;a++){
-            if(Lookfor(loge[a],key,0) != -1){
-                cache = getTheTexto(loge[a],"model='","', name=") + "\n" + cache;
-                Log.d("Suiteki.test",getTheTexto(loge[a],"model='","', name="));
+        Log.d("Suiteki.test", "Log:" + log);
+        for (int a = 0; loge.length > a; a++) {
+            if (Lookfor(loge[a], key, 0) != -1) {
+                cache = getTheTexto(loge[a], "model='", "', name=") + "\n" + cache;
+                Log.d("Suiteki.test", getTheTexto(loge[a], "model='", "', name="));
             }
         }
-        model = AnalyzeText(cache,"\n");
+        model = AnalyzeText(cache, "\n");
         model = deleteText(model);
-        Log.d("Suiteki.test","Model:" + model[0]);
+        Log.d("Suiteki.test", "Model:" + model[0]);
         return model[0];
     }
 
-    //取多个手环AuthKey,可能会报错
-    public static String[] getAuthKeyList(String log){
+    //取多个手环AuthKey,可能会报错,建议检测length是否大于0再使用
+    public static String[] getAuthKeyList(String log) {
         String[] loge;
         String[] key = null;
         String cache = "";
-        loge = AnalyzeText(log,"\n");
-        for(int a = 0;loge.length > a;a++){
-            if(Lookfor(loge[a],"authKey",0) != -1){
+        loge = AnalyzeText(log, "\n");
+        for (int a = 0; loge.length > a; a++) {
+            if (Lookfor(loge[a], "authKey", 0) != -1) {
                 cache = getAuthKey(loge[a]) + "\n" + cache;
             }
         }
-        key = AnalyzeText(cache,"\n");
+        key = AnalyzeText(cache, "\n");
         key = deleteText(key);
         return key;
     }
 
     //取设备名称,用于搭配前面的.getModel(),这里包括了大部分常见设备
-    public static String getModelName(String model){
+    public static String getModelName(String model) {
         String name;
-        switch(model){
-            case "hmpace.bracelet.v5" :
+        switch (model) {
+            case "hmpace.bracelet.v5":
                 name = "小米手环5";
                 break;
             case "hmpace.bracelet.v5h":
@@ -177,48 +181,54 @@ public class Suiteki {
             case "hmpace.watch.v7nfc":
                 name = "小米手环7 NFC版";
                 break;
-            default :
+            default:
                 name = "notFound";
         }
         return name;
     }
 
+    //查找文本是否存在,如不存在则返回 -1
     private static int Lookfor(String str1, String str2, int start) {
         return start >= 0 && start <= str1.length() && !"".equals(str1) && !"".equals(str2) ? str1.indexOf(str2, start) : -1;
     }
 
+    //将文本以特定字符为分隔转换为数组
     private static String[] AnalyzeText(String str, String separator) {
         if (!"".equals(separator) && !"".equals(str)) {
             if (separator.equals("\n")) {
                 str = exchangeText(str, "\r", "");
             }
-            return getTextRight(str, getTextLength(separator)).equals(separator) ? getTheText(separator + str, separator, separator) : getTheText(separator + str + separator, separator, separator);
+            return getTextRight(str, separator.length()).equals(separator) ? getTheText(separator + str, separator, separator) : getTheText(separator + str + separator, separator, separator);
         } else {
             return new String[0];
         }
     }
 
-    private static String[]  deleteText(String[] key){
+    //删除重复的文本
+    private static String[] deleteText(String[] key) {
         List list = new ArrayList();
-        for(int i=0;i<key.length;i++){
-            if(!list.contains(key[i])){
+        for (int i = 0; i < key.length; i++) {
+            if (!list.contains(key[i])) {
                 list.add(key[i]);
             }
         }
-        String[] newArr = AnalyzeText(getTheTexto(list.toString(),"[","]"),", ");
-        Log.d("Suiteki.test",list.toString());
+        String[] newArr = AnalyzeText(getTheTexto(list.toString(), "[", "]"), ", ");
+        Log.d("Suiteki.test", list.toString());
         return newArr;
     }
 
+    //查找文本,选择中所有str1和str2中间的文本
     private static String[] getTheText(String str, String left, String right) {
         return !"".equals(str) && !"".equals(left) && !"".equals(right) ? regexMatch(str, "(?<=\\Q" + left + "\\E).*?(?=\\Q" + right + "\\E)") : new String[0];
     }
 
+    //查找文本,选择str1和str2中间的文本,只选择第一个
     private static String getTheTexto(String str, String left, String right) {
         String[] temp = getTheText(str, left, right);
         return temp.length > 0 ? temp[0] : "";
     }
 
+    //一个对你们来说没什么用的函数
     private static String getTextRight(String str, int len) {
         if (!"".equals(str) && len > 0) {
             if (len > str.length()) {
@@ -232,6 +242,7 @@ public class Suiteki {
         }
     }
 
+    //又一个对你们来说没什么用的函数
     private static String exchangeText(String str, String find, String replace) {
         if (!"".equals(find) && !"".equals(str)) {
             find = "\\Q" + find + "\\E";
@@ -241,21 +252,20 @@ public class Suiteki {
         }
     }
 
-    private static int getTextLength(String str) {
-        return str.length();
-    }
 
+    //又又一个对你们来说没什么用的函数
     private static String[] regexMatch(String text, String statement) {
         Pattern pn = Pattern.compile(statement, 40);
         Matcher mr = pn.matcher(text);
         ArrayList list = new ArrayList();
-        while(mr.find()) {
+        while (mr.find()) {
             list.add(mr.group());
         }
         String[] strings = new String[list.size()];
-        return (String[])list.toArray(strings);
+        return (String[]) list.toArray(strings);
     }
 
+    //叒一个对你们来说没什么用的函数
     private static Object toObject(String var1) {
         try {
             JSONObject var2 = new JSONObject(var1);
@@ -265,8 +275,9 @@ public class Suiteki {
         }
     }
 
+    //叕一个对你们来说没什么用的函数
     private static Object getObject(Object var1, String var2) {
-        JSONObject var3 = (JSONObject)var1;
+        JSONObject var3 = (JSONObject) var1;
         if (var3 == null) {
             return null;
         } else {
@@ -279,8 +290,9 @@ public class Suiteki {
         }
     }
 
+    //叕又一个对你们来说没什么用的函数
     private static String getObjectText(Object var1, String var2) {
-        JSONObject var3 = (JSONObject)var1;
+        JSONObject var3 = (JSONObject) var1;
         if (var3 == null) {
             return "";
         } else {
@@ -293,8 +305,9 @@ public class Suiteki {
         }
     }
 
+    //一个对你们来说没什么用的函数
     private static Object getArray(Object var1, String var2) {
-        JSONObject var3 = (JSONObject)var1;
+        JSONObject var3 = (JSONObject) var1;
         if (var3 == null) {
             return null;
         } else {
@@ -307,13 +320,15 @@ public class Suiteki {
         }
     }
 
+    //一个对你们来说没什么用的函数
     private static int getArrayLength(Object var1) {
-        JSONArray var2 = (JSONArray)var1;
+        JSONArray var2 = (JSONArray) var1;
         return var2 == null ? 0 : var2.length();
     }
 
+    //一个对你们来说没什么用的函数
     private static Object getArrayObject(Object var1, int var2) {
-        JSONArray var3 = (JSONArray)var1;
+        JSONArray var3 = (JSONArray) var1;
         if (var3 == null) {
             return null;
         } else {
@@ -329,8 +344,9 @@ public class Suiteki {
     /**
      * re酱是我的
      * re可爱捏
+     * 
      * 谁都不许夺走
      * -Sky233
-     * 2022/8/23
+     * 2022/8/25
      */
 }
