@@ -1,71 +1,36 @@
 # Suiteki —— 一个可以获取小米手环的AuthKey的类库
 ![](https://sky233.ml/images/app.png)
----
->[原理](#原理)
->>
+------
+
 >[引进方法](#引进方法)
 >>
 >[食用方法](#食用方法)
 >>
->[编译方法](#编译方法)
->>
 >[获取code](#获取code)
 
-## 原理
->通过读取**小米运动健康**和**小米穿戴**的Log日志文件
-
-#### 日志文件的位置
-```
-"/storage/emulated/0/Android/data/com.mi.health/files/log/XiaomiFit.device.log"
-"/storage/emulated/0/Android/data/com.xiaomi.wearable/files/log/Wearable.log"
-```
 
 ## 引进方法
->把**Suiteki.jar**放置到**Project**下的**libs**文件夹内
->>
->并在**build.gradle**中添加下面的**代码**
->>
->这个项目使用了OkHttp,需要添加类库
-
-``` java
+``` Java
 dependencies {
     ...
-    implementation files('libs\\Suiteki.jar')   
+    implementation('ml.sky233.suiteki:Suiteki:1.0.3')   
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
 }
 ```
->点击**Sync Now**,并等待一会
->在java源文件中引进这个库即可使用,下为代码
 
 ``` java
-    import ml.sky233.Suiteki;
+    import static ml.sky233.Suiteki.*;
 ```
 
 ## 食用方法
->有个函数
-``` java
-    Suiteki.getAuthKey(String log)
-    Suiteki.getAuthKeyList(String log)
-    Suiteki.getModel(String log)
-    Suiteki.isMoreAuthkey(String log)
-    Suiteki.getHuamiToken(String code)
-    Suiteki.getModelName(String name)
-```
-## 编译方法
->我在**build.gradle**下写了一段任务命令
->>
-```
-task makeJar(type: Jar) {
-    baseName 'Suiteki'
-    from('build/intermediates/javac/debug/classes/')
-    exclude('test/','BuildConfig.class','R.class')
-    exclude{ it.name.startsWith('R$') }
-}
-```
->请先编译一次项目后运行
->>
->运行该命令后你可以在**/Suiteki/build/libs/**中找到 **Suieki.jar**了
-
+|            方法            | 返回数据类型 |                               返回数据内容                               |
+| :------------------------: | :----------: | :----------------------------------------------------------------------: |
+|   getAuthKey(String log)   |    String    |                    "e55d3c32ad0ecaa040192f226467dc9a"                    |
+| getAuthKeyList(String log) |   String[]   |   [e55d3c32ad0ecaa040192f226467dc9a,77b1592dd8ef60e1296420ed3d133d8e]    |
+|    getModel(String log)    |   String[]   |                          "hmpace.motion.v6nfc"                           |
+| isMoreAuthkey(String log)  |   boolean    |                                   true                                   |
+| getHuamiToken(String code) |   String[]   | [e55d3c32ad0ecaa040192f226467dc9a\nFA:F0:84:6E:E0:87\nFA:F0:84:6E:E0:87] |
+| getModelName(String name)  |    String    |                            "小米手环6 NFC版"                             |
 
 ## 获取code
 >小米账号登录ZeppLife的链接:
