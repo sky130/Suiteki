@@ -3,15 +3,11 @@ package ml.sky233;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.net.URLDecoder;
+import java.util.Random;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import static ml.sky233.util.Eson.*;
+import static ml.sky233.util.Text.*;
 
 import okhttp3.FormBody;
 import okhttp3.Headers;
@@ -22,17 +18,57 @@ import okhttp3.Response;
 
 public class Suiteki {
     private static String[] AuthKey;//AuthKey列表
+    private static String app_token = "";
+    private static String user_id = "";
+    private static String result_code = "";
+    private static String method = "";
+    private static String log = "";
 
-    //用OkHttp发送请求通过华米接口获取AuthKey
-    //灵感来源于 https://github.com/argrento/huami-token
-    public static String[] getHuamiToken(String code) {
+    public static String[] getHuamiToken() {
         Thread thread = null;
-
         //用线程发送请求
         thread = new Thread(new Runnable() {
-            String token = "";
-            String user = "";
-            String text = "";
+            String response_body = "";
+
+            public void run() {
+                OkHttpClient client = new OkHttpClient();
+                Headers header = new Headers.Builder()
+                        .add("apptoken", app_token)//app令牌
+                        .build();
+                Request getRequest = new Request.Builder()
+                        .url("https://api-mifit-us2.huami.com/users/" + user_id + "/devices?enableMultiDevice=true")//这里中间要改为user_id
+                        .headers(header)
+                        .build();
+                try {
+                    Response response = client.newCall(getRequest).execute();
+                    response_body = response.body().string();
+                    Object object = getArray(toObject(response_body), "items");//解析Json
+                    String[] authkeyList = new String[getArrayLength(object)];//解析Json
+                    for (int a = 0; getArrayLength(object) > a; a++) {
+                        authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key") + "\n" + getObjectText(getArrayObject(object, a), "macAddress");
+                    }
+                    AuthKey = authkeyList;
+                } catch (
+                        IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+        try {
+            thread.join();//等待线程
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return AuthKey;
+    }
+
+    //通过小米登录接口登录Huami
+    public static String loginHuami(String code) {
+        method = "Xiaomi";
+        Thread thread = null;
+        thread = new Thread(new Runnable() {
+            String response_body = "";
 
             public void run() {
                 OkHttpClient client = new OkHttpClient();
@@ -41,7 +77,7 @@ public class Suiteki {
                         .add("app_version", "5.9.2-play_100355")
                         .add("source", "com.huami.watch.hmwatchmanager")
                         .add("country_code", "US")
-                        .add("device_id", "02:00:00:6f:ad:18")//设备码可以修改一下
+                        .add("device_id", createDeviceCode())
                         .add("third_name", "mi-watch")
                         .add("lang", "en")
                         .add("device_model", "android_phone")
@@ -56,45 +92,17 @@ public class Suiteki {
                         .build();
                 try {
                     Response response = client.newCall(postRequest).execute();
-                    text = response.body().string();//因为response.body()只能调用一次,必须这样
-                    //Log.d("Suiteki.test", text);
-                    token = getObjectText(getObject(toObject(text), "token_info"), "app_token");//app令牌,接下来会用到这个token
-                    user = getObjectText(getObject(toObject(text), "token_info"), "user_id");//用户id,稍后会用到
-                    //Log.d("Suiteki.test", "user : " + user + "\n token : " + token);
+                    response_body = response.body().string();//因为response.body()只能调用一次,必须这样
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                if (!getObjectText(toObject(text), "error_code").equals("0106")) {//错误码0106,Code错误
-                    client = new OkHttpClient();
-                    Headers header = new Headers.Builder()
-                            .add("apptoken", token)//app令牌
-                            .build();
-                    postRequest = new Request.Builder()
-                            .url("https://api-mifit-us2.huami.com/users/" + user + "/devices?enableMultiDevice=true")//这里中间要改为user_id
-                            .headers(header)
-                            .build();
-                    try {
-                        Response response = client.newCall(postRequest).execute();
-                        text = response.body().string();
-                        //Log.d("Suiteki.test", text);
-                        Object object = getArray(toObject(text), "items");//解析Json
-                        String[] authkeyList = new String[getArrayLength(object)];//解析Json
-                        for (int a = 0; getArrayLength(object) > a; a++) {
-                            authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key") + "\n" + getObjectText(getArrayObject(object, a), "macAddress");
-                            //getObjectText(getArrayObject(object,a), "macAddress");
-                        }
-                        AuthKey = authkeyList;
-                        //Log.d("Suiteki.test",text);
-                        //Log.d("Suiteki.test", Arrays.toString(authkeyList));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    String[] authkeyList = new String[1];
-                    AuthKey[0] = "0106";//错误的密钥为0106,记得做判断
-                }
+                if (getObjectText(toObject(response_body), "result").equals("ok")) {
+                    result_code = "200";
+                    app_token = getObjectText(getObject(toObject(response_body), "token_info"), "app_token");//app令牌,接下来会用到这个token
+                    user_id = getObjectText(getObject(toObject(response_body), "token_info"), "user_id");//用户id,稍后会用到
+                } else
+                    result_code = getObjectText(toObject(response_body), "error_code");
             }
-
         });
         thread.start();
         try {
@@ -102,28 +110,110 @@ public class Suiteki {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return AuthKey;
+        return result_code;
     }
 
-    //普通获取方式,仅限一个AuthKey
-    public static String getAuthKey(String log) {
-        String key = getTextRight(getTheTexto(log, "authKey", ","), 32);
-        Log.d("Suiteki.test", "Authkey:" + key);
-        return key;
-    }
+    //通过Amazfit接口登录Huami
+    public static String loginHuami(String email, String password) {
+        method = "Amazfit";
+        Thread thread = null;
+        thread = new Thread(new Runnable() {
+            String response_body = "";
+            String header = "";
+            String token = "";
 
-    //检测是否AuthKey的数量是否大于1,但占用较大,不建议使用,以后会废弃这个方法
-    public static boolean isMoreAuthkey(String log) {
-        String[] loge = getAuthKeyList(log);
-        if (loge.length > 1) {
-            return true;
-        } else {
-            return false;
+            public void run() {
+                OkHttpClient client = new OkHttpClient().newBuilder().followRedirects(false).build();
+                RequestBody requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
+                        .add("client_id", "HuaMi")
+                        .add("country_code", "US")
+                        .add("password", password)
+                        .add("redirect_uri", "https://sky233.ml/suiteki")
+                        .add("token", "access")
+                        .build();
+                Request postRequest = new Request.Builder()
+                        .url("https://api-user.huami.com/registrations/" + email.replace("@", "%40") + "/tokens")//请求接口
+                        .post(requestBody)//post请求
+                        .build();
+                try {
+                    Response response = client.newCall(postRequest).execute();
+                    header = response.header("Location");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                result_code = "200";
+                if (getOneParameter(header, "error").equals("401")) {
+                    result_code = "401";
+                } else
+                    token = getOneParameter(header, "access");
+                client = new OkHttpClient();
+                requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
+                        .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
+                        .add("app_version", "5.9.2-play_100355")
+                        .add("source", "com.huami.watch.hmwatchmanager")
+                        .add("country_code", "US")
+                        .add("device_id", createDeviceCode())
+                        .add("third_name", "huami")
+                        .add("lang", "en")
+                        .add("device_model", "android_phone")
+                        .add("allow_registration", "false")
+                        .add("app_name", "com.huami.midong")
+                        .add("code", token)
+                        .add("grant_type", "access_token")
+                        .build();
+                postRequest = new Request.Builder()
+                        .url("https://account.huami.com/v2/client/login")//请求接口
+                        .post(requestBody)//post请求
+                        .build();
+                try {
+                    Response response = client.newCall(postRequest).execute();
+                    response_body = response.body().string();//因为response.body()只能调用一次
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (getObjectText(toObject(response_body), "result").equals("ok")) {
+                    result_code = "200";
+                    app_token = getObjectText(getObject(toObject(response_body), "token_info"), "app_token");//app令牌,接下来会用到这个token
+                    user_id = getObjectText(getObject(toObject(response_body), "token_info"), "user_id");//用户id,稍后会用到
+                } else
+                    result_code = getObjectText(toObject(response_body), "error_code");
+            }
+        });
+        thread.start();
+        try {
+            thread.join();//等待线程
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        return result_code;
+    }
+
+    private static String getOneParameter(String url, String keyWord) {
+        String retValue = "";
+        try {
+            final String charset = "utf-8";
+            url = URLDecoder.decode(url, charset);
+            if (url.indexOf('?') != -1) {
+                final String contents = url.substring(url.indexOf('?') + 1);
+                String[] keyValues = contents.split("&");
+                for (int i = 0; i < keyValues.length; i++) {
+                    String key = keyValues[i].substring(0, keyValues[i].indexOf("="));
+                    String value = keyValues[i].substring(keyValues[i].indexOf("=") + 1);
+                    if (key.equals(keyWord)) {
+                        if (value != null || !"".equals(value.trim())) {
+                            retValue = value;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retValue;
     }
 
     //取设备的型号,仅限一个设备
-    public static String getModel(String key, String log) {
+    public static String getModel(String key) {
         String[] loge = AnalyzeText(log, "\n");
         String[] model;
         String cache = "";
@@ -141,14 +231,14 @@ public class Suiteki {
     }
 
     //取多个手环AuthKey,可能会报错,建议检测length是否大于0再使用
-    public static String[] getAuthKeyList(String log) {
+    public static String[] getAuthKeyList() {
         String[] loge;
         String[] key = null;
         String cache = "";
         loge = AnalyzeText(log, "\n");
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], "authKey", 0) != -1) {
-                cache = getAuthKey(loge[a]) + "\n" + cache;
+                cache = getTextRight(getTheTexto(loge[a], "authKey", ","), 32) + "\n" + cache;
             }
         }
         key = AnalyzeText(cache, "\n");
@@ -187,166 +277,7 @@ public class Suiteki {
         return name;
     }
 
-    //查找文本是否存在,如不存在则返回 -1
-    private static int Lookfor(String str1, String str2, int start) {
-        return start >= 0 && start <= str1.length() && !"".equals(str1) && !"".equals(str2) ? str1.indexOf(str2, start) : -1;
+    public static void setLog(String str) {
+        log = str;
     }
-
-    //将文本以特定字符为分隔转换为数组
-    private static String[] AnalyzeText(String str, String separator) {
-        if (!"".equals(separator) && !"".equals(str)) {
-            if (separator.equals("\n")) {
-                str = exchangeText(str, "\r", "");
-            }
-            return getTextRight(str, separator.length()).equals(separator) ? getTheText(separator + str, separator, separator) : getTheText(separator + str + separator, separator, separator);
-        } else {
-            return new String[0];
-        }
-    }
-
-    //删除重复的文本
-    private static String[] deleteText(String[] key) {
-        List list = new ArrayList();
-        for (int i = 0; i < key.length; i++) {
-            if (!list.contains(key[i])) {
-                list.add(key[i]);
-            }
-        }
-        String[] newArr = AnalyzeText(getTheTexto(list.toString(), "[", "]"), ", ");
-        Log.d("Suiteki.test", list.toString());
-        return newArr;
-    }
-
-    //查找文本,选择中所有str1和str2中间的文本
-    private static String[] getTheText(String str, String left, String right) {
-        return !"".equals(str) && !"".equals(left) && !"".equals(right) ? regexMatch(str, "(?<=\\Q" + left + "\\E).*?(?=\\Q" + right + "\\E)") : new String[0];
-    }
-
-    //查找文本,选择str1和str2中间的文本,只选择第一个
-    private static String getTheTexto(String str, String left, String right) {
-        String[] temp = getTheText(str, left, right);
-        return temp.length > 0 ? temp[0] : "";
-    }
-
-    //一个对你们来说没什么用的函数
-    private static String getTextRight(String str, int len) {
-        if (!"".equals(str) && len > 0) {
-            if (len > str.length()) {
-                return str;
-            } else {
-                int start = str.length() - len;
-                return str.substring(start, str.length());
-            }
-        } else {
-            return "";
-        }
-    }
-
-    //又一个对你们来说没什么用的函数
-    private static String exchangeText(String str, String find, String replace) {
-        if (!"".equals(find) && !"".equals(str)) {
-            find = "\\Q" + find + "\\E";
-            return str.replaceAll(find, replace);
-        } else {
-            return "";
-        }
-    }
-
-
-    //又又一个对你们来说没什么用的函数
-    private static String[] regexMatch(String text, String statement) {
-        Pattern pn = Pattern.compile(statement, 40);
-        Matcher mr = pn.matcher(text);
-        ArrayList list = new ArrayList();
-        while (mr.find()) {
-            list.add(mr.group());
-        }
-        String[] strings = new String[list.size()];
-        return (String[]) list.toArray(strings);
-    }
-
-    //叒一个对你们来说没什么用的函数
-    private static Object toObject(String var1) {
-        try {
-            JSONObject var2 = new JSONObject(var1);
-            return var2;
-        } catch (JSONException var3) {
-            return null;
-        }
-    }
-
-    //叕一个对你们来说没什么用的函数
-    private static Object getObject(Object var1, String var2) {
-        JSONObject var3 = (JSONObject) var1;
-        if (var3 == null) {
-            return null;
-        } else {
-            try {
-                JSONObject var4 = var3.getJSONObject(var2);
-                return var4;
-            } catch (JSONException var5) {
-                return null;
-            }
-        }
-    }
-
-    //叕又一个对你们来说没什么用的函数
-    private static String getObjectText(Object var1, String var2) {
-        JSONObject var3 = (JSONObject) var1;
-        if (var3 == null) {
-            return "";
-        } else {
-            try {
-                String var4 = var3.getString(var2);
-                return var4;
-            } catch (JSONException var5) {
-                return "";
-            }
-        }
-    }
-
-    //一个对你们来说没什么用的函数
-    private static Object getArray(Object var1, String var2) {
-        JSONObject var3 = (JSONObject) var1;
-        if (var3 == null) {
-            return null;
-        } else {
-            try {
-                JSONArray var4 = var3.getJSONArray(var2);
-                return var4;
-            } catch (JSONException var5) {
-                return null;
-            }
-        }
-    }
-
-    //一个对你们来说没什么用的函数
-    private static int getArrayLength(Object var1) {
-        JSONArray var2 = (JSONArray) var1;
-        return var2 == null ? 0 : var2.length();
-    }
-
-    //一个对你们来说没什么用的函数
-    private static Object getArrayObject(Object var1, int var2) {
-        JSONArray var3 = (JSONArray) var1;
-        if (var3 == null) {
-            return null;
-        } else {
-            try {
-                JSONObject var4 = var3.getJSONObject(var2);
-                return var4;
-            } catch (JSONException var5) {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * re酱是我的
-     * re可爱捏
-     * 
-     * 谁都不许夺走
-     * -Sky233
-     * 2022/8/25
-     */
 }
