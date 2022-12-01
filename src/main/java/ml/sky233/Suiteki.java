@@ -5,6 +5,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 import static ml.sky233.util.Eson.*;
 import static ml.sky233.util.Text.*;
@@ -18,19 +21,22 @@ import okhttp3.Response;
 
 public class Suiteki {
     private static String[] AuthKey;//AuthKey列表
+    // private static Map<String,ArrayList> return_map = new HashMap<>();
+    private static ArrayList<Map> KeyArray; 
     private static String app_token = "";
     private static String user_id = "";
     private static String result_code = "";
     private static String method = "";
     private static String log = "";
 
-    public static String[] getHuamiToken() {
+    public static void getHuamiToken() {
         Thread thread = null;
         //用线程发送请求
         thread = new Thread(new Runnable() {
             String response_body = "";
 
             public void run() {
+                mapArray = new ArrayList<>();
                 OkHttpClient client = new OkHttpClient();
                 Headers header = new Headers.Builder()
                         .add("apptoken", app_token)//app令牌
@@ -45,9 +51,11 @@ public class Suiteki {
                     Object object = getArray(toObject(response_body), "items");//解析Json
                     String[] authkeyList = new String[getArrayLength(object)];//解析Json
                     for (int a = 0; getArrayLength(object) > a; a++) {
-                        authkeyList[a] = getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key") + "\n" + getObjectText(getArrayObject(object, a), "macAddress");
+                        Map<String,String> map = new HashMap<>();
+                        map.put("Authkey",getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"));
+                        map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
+                        mapArray.add(map);
                     }
-                    AuthKey = authkeyList;
                 } catch (
                         IOException e) {
                     e.printStackTrace();
@@ -60,11 +68,14 @@ public class Suiteki {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return AuthKey;
+    }
+
+    public static ArrayList getResultData(){
+        return KeyArray;
     }
 
     //通过小米登录接口登录Huami
-    public static String loginHuami(String code) {
+    public static void loginHuami(String code) {
         method = "Xiaomi";
         Thread thread = null;
         thread = new Thread(new Runnable() {
@@ -110,11 +121,10 @@ public class Suiteki {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return result_code;
     }
 
     //通过Amazfit接口登录Huami
-    public static String loginHuami(String email, String password) {
+    public static void loginHuami(String email, String password) {
         method = "Amazfit";
         Thread thread = null;
         thread = new Thread(new Runnable() {
@@ -146,21 +156,21 @@ public class Suiteki {
                     result_code = "401";
                 } else
                     token = getOneParameter(header, "access");
-                client = new OkHttpClient();
-                requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
-                        .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
-                        .add("app_version", "5.9.2-play_100355")
-                        .add("source", "com.huami.watch.hmwatchmanager")
-                        .add("country_code", "US")
-                        .add("device_id", createDeviceCode())
-                        .add("third_name", "huami")
-                        .add("lang", "en")
-                        .add("device_model", "android_phone")
-                        .add("allow_registration", "false")
-                        .add("app_name", "com.huami.midong")
-                        .add("code", token)
-                        .add("grant_type", "access_token")
-                        .build();
+                    client = new OkHttpClient();
+                    requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
+                            .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
+                            .add("app_version", "5.9.2-play_100355")
+                            .add("source", "com.huami.watch.hmwatchmanager")
+                            .add("country_code", "US")
+                            .add("device_id", createDeviceCode())
+                            .add("third_name", "huami")
+                            .add("lang", "en")
+                            .add("device_model", "android_phone")
+                            .add("allow_registration", "false")
+                            .add("app_name", "com.huami.midong")
+                            .add("code", token)
+                            .add("grant_type", "access_token")
+                            .build();
                 postRequest = new Request.Builder()
                         .url("https://account.huami.com/v2/client/login")//请求接口
                         .post(requestBody)//post请求
@@ -185,6 +195,9 @@ public class Suiteki {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String getResultCode(){
         return result_code;
     }
 
