@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import static ml.sky233.util.Eson.*;
 import static ml.sky233.util.Text.*;
+import ml.sky233.SuitekiObject;
 
 import okhttp3.FormBody;
 import okhttp3.Headers;
@@ -20,23 +21,51 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Suiteki {
-    private static String[] AuthKey;//AuthKey列表
+    private String[] AuthKey;//AuthKey列表
     // private static Map<String,ArrayList> return_map = new HashMap<>();
     private static ArrayList<Map> KeyArray; 
-    private static String app_token = "";
-    private static String user_id = "";
-    private static String result_code = "";
-    private static String method = "";
-    private static String log = "";
+    private String user_email="",user_password="",user_code="";
+    private String app_token = "";
+    private String user_id = "";
+    private String result_code = "";
+    private String method = "";
+    private String log = "";
 
-    public static void getHuamiToken() {
+    public Suiteki(String email,String password){
+        user_email = email;
+        user_password = password;
+    }   
+
+    public void setEmail(String email){
+        user_email = email;
+    }
+
+    public void setPassword(String password){
+        user_password = password;
+    }
+
+    public void setCode(String code){
+        user_code = code;
+    }
+
+    public boolean isUserEmpty(){
+        if(user_email != "" && user_password != ""){
+            return true;
+        }else if(code != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public void getHuamiToken() {
         Thread thread = null;
         //用线程发送请求
         thread = new Thread(new Runnable() {
             String response_body = "";
 
             public void run() {
-                mapArray = new ArrayList<>();
+                ArrayList<SuitekiObject> mapArray = new ArrayList<>();
                 OkHttpClient client = new OkHttpClient();
                 Headers header = new Headers.Builder()
                         .add("apptoken", app_token)//app令牌
@@ -51,10 +80,12 @@ public class Suiteki {
                     Object object = getArray(toObject(response_body), "items");//解析Json
                     String[] authkeyList = new String[getArrayLength(object)];//解析Json
                     for (int a = 0; getArrayLength(object) > a; a++) {
-                        Map<String,String> map = new HashMap<>();
-                        map.put("Authkey",getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"));
-                        map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
-                        mapArray.add(map);
+                        // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
+                        SuitekiObject obj = new SuitekiObject(getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"),);
+                        // Map<String,String> map = new HashMap<>();
+                        // map.put("Authkey",);
+                        // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
+                        mapArray.add(obj);
                     }
                 } catch (
                         IOException e) {
@@ -74,8 +105,18 @@ public class Suiteki {
         return KeyArray;
     }
 
+    public void loginHuami(){
+        if(user_email != "" && user_password != ""){
+            loginHuami(user_email,user_password);
+        }else if(code != ""){
+            loginHuami(user_code);
+        }else{
+            result_code="-1"
+        }
+    }
+    
     //通过小米登录接口登录Huami
-    public static void loginHuami(String code) {
+    public void loginHuami(String code) {
         method = "Xiaomi";
         Thread thread = null;
         thread = new Thread(new Runnable() {
@@ -124,7 +165,7 @@ public class Suiteki {
     }
 
     //通过Amazfit接口登录Huami
-    public static void loginHuami(String email, String password) {
+    public void loginHuami(String email, String password) {
         method = "Amazfit";
         Thread thread = null;
         thread = new Thread(new Runnable() {
@@ -290,7 +331,9 @@ public class Suiteki {
         return name;
     }
 
-    public static void setLog(String str) {
+
+    //设置Log文件内容
+    public void setLog(String str) {
         log = str;
     }
 }
