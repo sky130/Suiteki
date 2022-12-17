@@ -23,7 +23,7 @@ import okhttp3.Response;
 public class Suiteki {
     private String[] AuthKey;//AuthKey列表
     // private Map<String,ArrayList> return_map = new HashMap<>();
-    private ArrayList<Map> KeyArray; 
+    private ArrayList<SuitekiObject> KeyArray; 
     private String user_email="",user_password="",user_code="";
     private String app_token = "";
     private String user_id = "";
@@ -87,6 +87,7 @@ public class Suiteki {
                         // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
                         mapArray.add(obj);
                     }
+                    KeyArray = mapArray;
                 } catch (
                         IOException e) {
                     e.printStackTrace();
@@ -266,26 +267,23 @@ public class Suiteki {
         return retValue;
     }
 
-    //取设备的型号,仅限一个设备
+    //取设备的型号,仅限一个设备,准备废弃
     public String getModel(String key) {
         String[] loge = AnalyzeText(log, "\n");
         String[] model;
         String cache = "";
-        Log.d("Suiteki.test", "Log:" + log);
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], key, 0) != -1) {
                 cache = getTheTexto(loge[a], "model='", "', name=") + "\n" + cache;
-                Log.d("Suiteki.test", getTheTexto(loge[a], "model='", "', name="));
             }
         }
         model = AnalyzeText(cache, "\n");
         model = deleteText(model);
-        Log.d("Suiteki.test", "Model:" + model[0]);
         return model[0];
     }
 
     //取多个手环AuthKey,可能会报错,建议检测length是否大于0再使用
-    public String[] getAuthKeyList() {
+    public ArrayList getAuthKeyList() {
         String[] loge;
         String[] key = null;
         String cache = "";
@@ -293,21 +291,14 @@ public class Suiteki {
         loge = AnalyzeText(log, "\n");
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], "authKey", 0) != -1) {
-                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16)
+                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16),getTheTexto(loge[a], "model='", "', name="))
                 SuitekiObject obj = new SuitekiObject();
             }
         }
         key = AnalyzeText(cache, "\n");
         key = deleteText(key);
-        return key;
+        return objs;
     }
-
-    private String getMacAddress(){
-
-    }
-
-      
-
 
     //设置Log文件内容
     public void setLog(String str) {
