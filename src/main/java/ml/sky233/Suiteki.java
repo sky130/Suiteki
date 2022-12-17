@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-import static ml.sky233.util.Eson.*;
-import static ml.sky233.util.Text.*;
+import ml.sky233.util.Eson.*;
+import ml.sky233.util.Text.*;
 import ml.sky233.SuitekiObject;
 
 import okhttp3.FormBody;
@@ -22,8 +22,8 @@ import okhttp3.Response;
 
 public class Suiteki {
     private String[] AuthKey;//AuthKey列表
-    // private static Map<String,ArrayList> return_map = new HashMap<>();
-    private static ArrayList<Map> KeyArray; 
+    // private Map<String,ArrayList> return_map = new HashMap<>();
+    private ArrayList<Map> KeyArray; 
     private String user_email="",user_password="",user_code="";
     private String app_token = "";
     private String user_id = "";
@@ -101,7 +101,7 @@ public class Suiteki {
         }
     }
 
-    public static ArrayList getResultData(){
+    public ArrayList getResultData(){
         return KeyArray;
     }
 
@@ -163,7 +163,7 @@ public class Suiteki {
             e.printStackTrace();
         }
     }
-
+    
     //通过Amazfit接口登录Huami
     public void loginHuami(String email, String password) {
         method = "Amazfit";
@@ -238,11 +238,11 @@ public class Suiteki {
         }
     }
 
-    public static String getResultCode(){
+    public String getResultCode(){
         return result_code;
     }
 
-    private static String getOneParameter(String url, String keyWord) {
+    private String getOneParameter(String url, String keyWord) {
         String retValue = "";
         try {
             final String charset = "utf-8";
@@ -267,7 +267,7 @@ public class Suiteki {
     }
 
     //取设备的型号,仅限一个设备
-    public static String getModel(String key) {
+    public String getModel(String key) {
         String[] loge = AnalyzeText(log, "\n");
         String[] model;
         String cache = "";
@@ -285,14 +285,16 @@ public class Suiteki {
     }
 
     //取多个手环AuthKey,可能会报错,建议检测length是否大于0再使用
-    public static String[] getAuthKeyList() {
+    public String[] getAuthKeyList() {
         String[] loge;
         String[] key = null;
         String cache = "";
+        ArrayList<SuitekiObject> objs = new ArrayList<>;
         loge = AnalyzeText(log, "\n");
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], "authKey", 0) != -1) {
-                cache = getTextRight(getTheTexto(loge[a], "authKey", ","), 32) + "\n" + cache;
+                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16)
+                SuitekiObject obj = new SuitekiObject();
             }
         }
         key = AnalyzeText(cache, "\n");
@@ -300,36 +302,11 @@ public class Suiteki {
         return key;
     }
 
-    //取设备名称,用于搭配前面的.getModel(),这里包括了大部分常见设备
-    public static String getModelName(String model) {
-        String name;
-        switch (model) {
-            case "hmpace.bracelet.v5":
-                name = "小米手环5";
-                break;
-            case "hmpace.bracelet.v5h":
-                name = "小米手环5 NFC版";
-                break;
-            case "hmpace.motion.v6":
-                name = "小米手环6";
-                break;
-            case "hmpace.motion.v6nfc":
-                name = "小米手环6 NFC版";
-                break;
-            case "hqbd3.watch.l67":
-                name = "小米手环7 Pro";
-                break;
-            case "hmpace.watch.v7":
-                name = "小米手环7";
-                break;
-            case "hmpace.watch.v7nfc":
-                name = "小米手环7 NFC版";
-                break;
-            default:
-                name = "notFound";
-        }
-        return name;
+    private String getMacAddress(){
+
     }
+
+      
 
 
     //设置Log文件内容

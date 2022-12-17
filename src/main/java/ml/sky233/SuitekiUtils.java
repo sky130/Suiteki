@@ -20,6 +20,37 @@ public class SuitekiUtils {
     public static final String MI_HEALTH_PATH = "/storage/emulated/0/Android/data/com.mi.health/files/log/XiaomiFit.device.log";
     public static final String MI_WEARABLE_PATH = "/storage/emulated/0/Android/data/com.xiaomi.wearable/files/log/Wearable.log";
 
+    //取设备名称,用于搭配前面的.getModel(),这里包括了大部分常见设备
+    public static String getModelName(String model) {
+        String name;
+        switch (model) {
+            case "hmpace.bracelet.v5":
+                name = "小米手环5";
+                break;
+            case "hmpace.bracelet.v5h":
+                name = "小米手环5 NFC版";
+                break;
+            case "hmpace.motion.v6":
+                name = "小米手环6";
+                break;
+            case "hmpace.motion.v6nfc":
+                name = "小米手环6 NFC版";
+                break;
+            case "hqbd3.watch.l67":
+                name = "小米手环7 Pro";
+                break;
+            case "hmpace.watch.v7":
+                name = "小米手环7";
+                break;
+            case "hmpace.watch.v7nfc":
+                name = "小米手环7 NFC版";
+                break;
+            default:
+                name = "notFound";
+        }
+        return name;
+    }
+    
     public static Uri changeToUri(String path) {
         path = path.replace("/storage/emulated/0/", "").replace("/", "%2F");
         //d("PathToUri"+"content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fdata/document/primary%3A" + path);
