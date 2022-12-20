@@ -1,7 +1,7 @@
 package ml.sky233;
 
 public class SuitekiObject{
-    private AuthKey="",Mac="",DeviceName="";
+    private String AuthKey="",Mac="",DeviceName="";
 
     public SuitekiObject(){
         
