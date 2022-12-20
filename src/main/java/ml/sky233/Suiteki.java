@@ -292,7 +292,7 @@ public class Suiteki {
         loge = AnalyzeText(log, "\n");
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], "authKey", 0) != -1) {
-                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16), model =  getTheTexto(loge[a], "model='", "', name="))
+                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16), model =  getTheTexto(loge[a], "model='", "', name=");
                 SuitekiObject obj = new SuitekiObject();
             }
         }
