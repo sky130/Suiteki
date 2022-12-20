@@ -1,5 +1,6 @@
 package ml.sky233;
 
+
 import android.util.Log;
 
 import java.io.IOException;
@@ -9,8 +10,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-import ml.sky233.util.Eson.*;
-import ml.sky233.util.Text.*;
+import static ml.sky233.util.Eson.*;
+import static ml.sky233.util.Text.*;
 import ml.sky233.SuitekiObject;
 
 import okhttp3.FormBody;
@@ -23,7 +24,7 @@ import okhttp3.Response;
 public class Suiteki {
     private String[] AuthKey;//AuthKey列表
     // private Map<String,ArrayList> return_map = new HashMap<>();
-    private ArrayList<SuitekiObject> KeyArray; 
+    private ArrayList<SuitekiObject> KeyArray;
     private String user_email="",user_password="",user_code="";
     private String app_token = "";
     private String user_id = "";
@@ -34,7 +35,7 @@ public class Suiteki {
     public Suiteki(String email,String password){
         user_email = email;
         user_password = password;
-    }   
+    }
 
     public void setEmail(String email){
         user_email = email;
@@ -51,7 +52,7 @@ public class Suiteki {
     public boolean isUserEmpty(){
         if(user_email != "" && user_password != ""){
             return true;
-        }else if(code != ""){
+        }else if(user_code != ""){
             return true;
         }else{
             return false;
@@ -81,7 +82,7 @@ public class Suiteki {
                     String[] authkeyList = new String[getArrayLength(object)];//解析Json
                     for (int a = 0; getArrayLength(object) > a; a++) {
                         // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
-                        SuitekiObject obj = new SuitekiObject(getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"),);
+                        SuitekiObject obj = new SuitekiObject(getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"),getObjectText(getArrayObject(object, a), "macAddress"));
                         // Map<String,String> map = new HashMap<>();
                         // map.put("Authkey",);
                         // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
@@ -109,13 +110,13 @@ public class Suiteki {
     public void loginHuami(){
         if(user_email != "" && user_password != ""){
             loginHuami(user_email,user_password);
-        }else if(code != ""){
+        }else if(user_code != ""){
             loginHuami(user_code);
         }else{
-            result_code="-1"
+            result_code="-1";
         }
     }
-    
+
     //通过小米登录接口登录Huami
     public void loginHuami(String code) {
         method = "Xiaomi";
@@ -164,7 +165,7 @@ public class Suiteki {
             e.printStackTrace();
         }
     }
-    
+
     //通过Amazfit接口登录Huami
     public void loginHuami(String email, String password) {
         method = "Amazfit";
@@ -198,21 +199,21 @@ public class Suiteki {
                     result_code = "401";
                 } else
                     token = getOneParameter(header, "access");
-                    client = new OkHttpClient();
-                    requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
-                            .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
-                            .add("app_version", "5.9.2-play_100355")
-                            .add("source", "com.huami.watch.hmwatchmanager")
-                            .add("country_code", "US")
-                            .add("device_id", createDeviceCode())
-                            .add("third_name", "huami")
-                            .add("lang", "en")
-                            .add("device_model", "android_phone")
-                            .add("allow_registration", "false")
-                            .add("app_name", "com.huami.midong")
-                            .add("code", token)
-                            .add("grant_type", "access_token")
-                            .build();
+                client = new OkHttpClient();
+                requestBody = new FormBody.Builder()//构建请求Body，数据类型为application/x-www-form-urlencoded
+                        .add("dn", "account.huami.com,api-user.huami.com,app-analytics.huami.com,api-watch.huami.com,api-analytics.huami.com,api-mifit.huami.com")
+                        .add("app_version", "5.9.2-play_100355")
+                        .add("source", "com.huami.watch.hmwatchmanager")
+                        .add("country_code", "US")
+                        .add("device_id", createDeviceCode())
+                        .add("third_name", "huami")
+                        .add("lang", "en")
+                        .add("device_model", "android_phone")
+                        .add("allow_registration", "false")
+                        .add("app_name", "com.huami.midong")
+                        .add("code", token)
+                        .add("grant_type", "access_token")
+                        .build();
                 postRequest = new Request.Builder()
                         .url("https://account.huami.com/v2/client/login")//请求接口
                         .post(requestBody)//post请求
@@ -287,11 +288,11 @@ public class Suiteki {
         String[] loge;
         String[] key = null;
         String cache = "";
-        ArrayList<SuitekiObject> objs = new ArrayList<>;
+        ArrayList<SuitekiObject> objs = new ArrayList<SuitekiObject>();
         loge = AnalyzeText(log, "\n");
         for (int a = 0; loge.length > a; a++) {
             if (Lookfor(loge[a], "authKey", 0) != -1) {
-                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16),getTheTexto(loge[a], "model='", "', name="))
+                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16), model =  getTheTexto(loge[a], "model='", "', name="))
                 SuitekiObject obj = new SuitekiObject();
             }
         }
