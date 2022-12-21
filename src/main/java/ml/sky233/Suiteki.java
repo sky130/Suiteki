@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 
 import static ml.sky233.util.Eson.*;
 import static ml.sky233.util.Text.*;
+
 import ml.sky233.SuitekiObject;
 
 import okhttp3.FormBody;
@@ -23,38 +25,45 @@ import okhttp3.Response;
 
 public class Suiteki {
     private String[] AuthKey;//AuthKey列表
-    // private Map<String,ArrayList> return_map = new HashMap<>();
     private ArrayList<SuitekiObject> KeyArray;
-    private String user_email="",user_password="",user_code="";
-    private String app_token = "";
-    private String user_id = "";
-    private String result_code = "";
-    private String method = "";
-    private String log = "";
+    private String user_email = "", user_password = "", user_code = "";
+    private String app_token = "";//APP令牌
+    private String user_id = "";//用户ID
+    private String result_code = "";//结果码
+    private String method = "";//使用方法
+    private String log = "";//Log内容
 
-    public Suiteki(String email,String password){
+    public Suiteki(String email, String password) {
         user_email = email;
         user_password = password;
     }
 
-    public void setEmail(String email){
-        user_email = email;
+    public Suiteki() {
+
     }
 
-    public void setPassword(String password){
-        user_password = password;
-    }
-
-    public void setCode(String code){
+    public Suiteki(String code) {
         user_code = code;
     }
 
-    public boolean isUserEmpty(){
-        if(user_email != "" && user_password != ""){
+    public void setEmail(String email) {
+        user_email = email;
+    }
+
+    public void setPassword(String password) {
+        user_password = password;
+    }
+
+    public void setCode(String code) {
+        user_code = code;
+    }
+
+    public boolean isUserEmpty() {
+        if (user_email != "" && user_password != "") {
             return true;
-        }else if(user_code != ""){
+        } else if (user_code != "") {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -66,7 +75,6 @@ public class Suiteki {
             String response_body = "";
 
             public void run() {
-                ArrayList<SuitekiObject> mapArray = new ArrayList<>();
                 OkHttpClient client = new OkHttpClient();
                 Headers header = new Headers.Builder()
                         .add("apptoken", app_token)//app令牌
@@ -79,14 +87,11 @@ public class Suiteki {
                     Response response = client.newCall(getRequest).execute();
                     response_body = response.body().string();
                     Object object = getArray(toObject(response_body), "items");//解析Json
-                    String[] authkeyList = new String[getArrayLength(object)];//解析Json
+                    ArrayList<SuitekiObject> mapArray = new ArrayList<>();
                     for (int a = 0; getArrayLength(object) > a; a++) {
-                        // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
-                        SuitekiObject obj = new SuitekiObject(getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"),getObjectText(getArrayObject(object, a), "macAddress"));
-                        // Map<String,String> map = new HashMap<>();
-                        // map.put("Authkey",);
-                        // map.put("MacAddress",getObjectText(getArrayObject(object, a), "macAddress"));
+                        SuitekiObject obj = new SuitekiObject(getObjectText(toObject(getObjectText(getArrayObject(object, a), "additionalInfo")), "auth_key"), getObjectText(getArrayObject(object, a), "macAddress"));
                         mapArray.add(obj);
+
                     }
                     KeyArray = mapArray;
                 } catch (
@@ -103,17 +108,17 @@ public class Suiteki {
         }
     }
 
-    public ArrayList getResultData(){
+    public ArrayList getResultData() {
         return KeyArray;
     }
 
-    public void loginHuami(){
-        if(user_email != "" && user_password != ""){
-            loginHuami(user_email,user_password);
-        }else if(user_code != ""){
+    public void loginHuami() {
+        if (user_email != "" && user_password != "") {
+            loginHuami(user_email, user_password);
+        } else if (user_code != "") {
             loginHuami(user_code);
-        }else{
-            result_code="-1";
+        } else {
+            result_code = "-1";
         }
     }
 
@@ -240,7 +245,7 @@ public class Suiteki {
         }
     }
 
-    public String getResultCode(){
+    public String getResultCode() {
         return result_code;
     }
 
@@ -285,19 +290,29 @@ public class Suiteki {
 
     //取多个手环AuthKey,可能会报错,建议检测length是否大于0再使用
     public ArrayList getAuthKeyList() {
-        String[] loge;
-        String[] key = null;
-        String cache = "";
-        ArrayList<SuitekiObject> objs = new ArrayList<SuitekiObject>();
-        loge = AnalyzeText(log, "\n");
-        for (int a = 0; loge.length > a; a++) {
-            if (Lookfor(loge[a], "authKey", 0) != -1) {
-                String atk = getTextRight(getTheTexto(loge[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(loge[a], "macAddress", ","), 16), model =  getTheTexto(loge[a], "model='", "', name=");
-                SuitekiObject obj = new SuitekiObject();
+        String[] log;
+        List<String> atks = new ArrayList<>(), macs = new ArrayList<>(), models = new ArrayList<>();
+        log = AnalyzeText(this.log, "\n");
+
+
+        for (int a = 0; log.length > a; a++) {
+            String atk = getTextRight(getTheTexto(log[a], "authKey", ","), 32), mac = getTextRight(getTheTexto(log[a], "macAddress", ","), 16), model = getTheTexto(log[a], "model='", "', name=");
+            if (!atks.contains(atk) && !macs.contains(mac) && !models.contains(models)) {
+                atks.add(atk);
+                macs.add(mac);
+                models.add(model);
             }
         }
-        key = AnalyzeText(cache, "\n");
-        key = deleteText(key);
+
+
+        ArrayList<SuitekiObject> objs = new ArrayList<SuitekiObject>();
+
+        for (int a = 0; atks.size() > a; a++) {
+            if (Lookfor(log[a], "authKey", 0) != -1) {
+                String atk = atks.get(a), mac = macs.get(a), model = models.get(a);
+                objs.add(new SuitekiObject(atk, mac, model));
+            }
+        }
         return objs;
     }
 
