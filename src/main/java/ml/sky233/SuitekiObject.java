@@ -1,32 +1,36 @@
 package ml.sky233;
 
-public class SuitekiObject{
-    private String AuthKey="",Mac="",DeviceName="";
+public class SuitekiObject {
+    private String AuthKey = "", Mac = "", DeviceName = "";
 
-    public SuitekiObject(){
-        
+    public SuitekiObject() {
+
     }
 
-    public SuitekiObject(String authKey,String mac,String name){
+    public SuitekiObject(String authKey, String mac, String name) {
         DeviceName = name;
         AuthKey = authKey;
         Mac = mac;
     }
 
-    public SuitekiObject(String authKey,String mac){
+    public SuitekiObject(String authKey, String mac) {
         AuthKey = authKey;
         Mac = mac;
     }
 
-    public String getAuthKey(){
+    public String getAuthKey() {
         return AuthKey;
     }
 
-    public String getMac(){
+    public String toString() {
+        return "AuthKey:" + AuthKey + "\nMac:" + Mac + "\nModel" + DeviceName;
+    }
+
+    public String getMac() {
         return Mac;
     }
 
-    public String getDeviceName(){
+    public String getDeviceName() {
         return DeviceName;
     }
 }
