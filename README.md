@@ -6,11 +6,11 @@
 dependencies {
     ...
     implementation('ml.sky233.suiteki:Suiteki:1.1.0')   
-    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation('com.squareup.okhttp3:okhttp:4.9.1')
 }
 ```
 
-[详细食用方法戳这里](https://sky233.ml/docs/#Suiteki)
+[详细食用方法戳这里](https://sky233.ml/docs/#/start-suiteki)
 
 ## LICENSE
 ```
