@@ -5,7 +5,7 @@
 ``` Java
 dependencies {
     ...
-    implementation('ml.sky233.suiteki:Suiteki:1.0.5')   
+    implementation('ml.sky233.suiteki:Suiteki:1.1.0')   
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
 }
 ```
